@@ -13,9 +13,20 @@ public:
   GLApp(512, 512, 4, "Image Processing", true, false, false, args)
   {
   }
+    
+  uint8_t getScaleValue(uint32_t x, uint32_t y, Vec3 scale) const {
+    return uint8_t(image.getValue(x,y,0)*scale.x + image.getValue(x,y,1)*scale.y + image.getValue(x,y,2)*scale.z);
+  }
   
   void toGrayscale(bool uniform=false) {
-    // TODO: convert image to grayscale
+    Image grayScaleImage = image;
+    const Vec3 scale = uniform ? Vec3{0.333f,0.333f,0.333f} : Vec3{0.299f,0.587f,0.114f};
+    for (uint32_t y = 0;y<image.height;++y) {
+      for (uint32_t x = 0;x<image.width;++x) {
+        grayScaleImage.setValue(x,y,getScaleValue(x,y,scale));
+      }
+    }
+    image = grayScaleImage;
   }
 
   void loadImage() {
@@ -50,13 +61,36 @@ public:
     
     std::stringstream ss;
 
-    // TODO: convert image to ASCII-Art
+    for (uint32_t y = 0;y<image.height;y+=2) {
+      for (uint32_t x = 0;x<image.width;x+=2) {
+        const uint8_t v = image.getLumiValue(x,image.height-1-y);
+        ss << lut[(v*(lut.length()-1))/255] << lut[(v*(lut.length()-1))/255];
+      }
+      ss << "\n";
+    }
 
     return ss.str();
   }
   
   void filter(const Grid2D& filter) {
-    // TODO: apply filter to image
+    Image filteredImage = image;
+    const uint32_t hw = uint32_t(filter.getWidth()/2);
+    const uint32_t hh = uint32_t(filter.getHeight()/2);
+      
+    for (uint32_t y = hh;y<image.height-hh;y+=1) {
+      for (uint32_t x = hw;x<image.width-hw;x+=1) {
+        for (uint8_t c = 0;c<image.componentCount;c+=1) {
+            float conv = 0.0f;
+            for (uint32_t u = 0;u<filter.getHeight();u+=1) {
+              for (uint32_t v = 0;v<filter.getWidth();v+=1) {
+                conv += float(image.getValue((x+u-hw),(y+v-hh),c)) * filter.getValue(u, v);
+              }
+            }
+            filteredImage.setValue(x,y,c,uint8_t(fabs(conv)));
+        }
+      }
+    }
+      image = filteredImage;
   }
   
   virtual void keyboard(int key, int scancode, int action, int mods) override {
