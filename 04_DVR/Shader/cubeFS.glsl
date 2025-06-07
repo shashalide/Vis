@@ -38,4 +38,12 @@ void main() {
 
   // TODO: add raycaster here
   result = vec4(1.0);
+  do {
+    float scaleValue = texture(volume, currentPoint).r;
+    vec4 colorValue = transferFunction(scaleValue);
+    colorValue.a = 1.0 - pow(1.0 - colorValue.a, opacityCorrection);
+    result = under(colorValue, result);
+    if (result.a > 0.95) break;
+    currentPoint += delta;
+  } while (inBounds(currentPoint));
 }
