@@ -11,12 +11,17 @@ public:
   ColorPicker(const std::vector<std::string>& args) :
   GLApp{800,800,1,"Color Picker", true, false, false, args} {}
 
+  float convertFunc(int n, float H, float S, float V) {
+    const float k =  fmod(float(n + H/60), 6.0f);
+    return V - V * S * std::max<float>(0, std::min<float>(std::min<float>(k, 4.0f-k), 1.0f));
+  }
+
   Vec3 convertPosFromHSVToRGB(float x, float y) {
-    // TODO:
-    // enter code here that interprets the mouse's
-    // x, y position as H ans S (I suggest to set
-    // V to 1.0) and converts that tripple to RGB
-    return Vec3{x,y,1.0f};
+    const float H = float(360*x), S = y, V = 1.0f;
+    float r = convertFunc(5, H, S, V);
+    float g = convertFunc(3, H, S, V);
+    float b = convertFunc(1, H, S, V);
+    return Vec3{r,g,b};
   }
   
   virtual void init() override {
@@ -79,4 +84,3 @@ int main(int argc, char** argv) {
   }
   return EXIT_SUCCESS;
 }
-
